@@ -62,6 +62,7 @@ public class UI extends Application {
 
         ListView<Todo> todoListView = new ListView<Todo>(todoList);
         todoListView.setCellFactory(listView -> new TodoCell());
+        todoListView.setMinSize(980,500);
         root.add(todoListView,0,0);
         return new Scene(root, 1080, 720);
     }

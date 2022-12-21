@@ -33,6 +33,7 @@ public class Todo implements Serializable
     {
         return this.description;
     }
+    public void setDescription(String description) { this.description = description; }
     @Override
     public String toString()
     {
