@@ -11,9 +11,11 @@ import javafx.scene.paint.Color;
 public class TodoCell extends ListCell<Todo>
 {
     Todo todo;
-    public TodoCell()
+    todoController todoCon;
+    public TodoCell(todoController todoCon)
     {
         todo = null;
+        this.todoCon = todoCon;
     }
 
     @Override
@@ -30,32 +32,6 @@ public class TodoCell extends ListCell<Todo>
     }
 
     private void buildCell(Todo todo) {
-        /*
-        CheckBox doneCb = new CheckBox();
-        doneCb.setSelected(todo.getDone());
-        doneCb.setOnAction(e->
-        {
-            todo.setDone(doneCb.selectedProperty().get());
-            System.out.println(todo);
-        });
-        setGraphic(doneCb);
-        setText(todo.getTitle() + "\n" + todo.getDescription());
-        setOnMouseClicked(e->{
-            //edit the displayed To-Do
-            if(e.getClickCount() == 2)
-            {
-                setText(null);
-                TextField editingField = new TextField();
-                editingField.setOnAction(f->{
-                    todo.setTitle(editingField.getText());
-                    setGraphic(doneCb);
-                    setText(todo.getTitle() + "\n" + todo.getDescription());
-                });
-                setGraphic(editingField);
-            }
-        });
-         */
-
         BorderPane container = new BorderPane();
 
         Label titleTodo = new Label(todo.getTitle());
@@ -79,7 +55,7 @@ public class TodoCell extends ListCell<Todo>
             }
             else if(e.isShiftDown() && e.getClickCount() == 1)
             {
-                //delete todoData and container should be an empty container
+                todoCon.deleteTodo(todo);
             }
         });
 

@@ -5,10 +5,8 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -19,16 +17,19 @@ import java.io.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class UI extends Application {
     Stage primaryStage;
     Scene mainScene;
     Scene creationScene;
+    todoController todoCon;
     ObservableList<Todo> todoList;
 
     public void init()
     {
-        todoList = loadTodo();
+        todoCon = new todoController();
+        todoList = todoCon.getTodoList();
     }
 
     public static void main(String[] args) {
@@ -38,7 +39,7 @@ public class UI extends Application {
     @Override
     public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
-        primaryStage.setOnCloseRequest(e->saveTodo(todoList));
+        primaryStage.setOnCloseRequest(e->todoCon.saveTodo(todoList));
         primaryStage.setTitle("To-Do's");
 
         mainScene = initMainScene();
@@ -50,6 +51,19 @@ public class UI extends Application {
 
     public Scene initMainScene()
     {
+        BorderPane mainContainer = new BorderPane();
+
+        ChoiceBox filterChoiceBox = new ChoiceBox();
+        ArrayList<String> filterItems = new ArrayList<String>();
+        filterItems.add("Deadline");
+        filterItems.add("Done");
+        filterItems.add("Open");
+        ObservableList<String> filterMethods = FXCollections.observableArrayList(filterItems);
+        filterChoiceBox.setItems(filterMethods);
+        mainContainer.setTop(filterChoiceBox);
+        BorderPane.setAlignment(filterChoiceBox,Pos.CENTER);
+        BorderPane.setMargin(filterChoiceBox,new Insets(15,0,0,15));
+
         GridPane root = new GridPane();
         root.setHgap(10);
         root.setVgap(10);
@@ -60,11 +74,36 @@ public class UI extends Application {
         todoCreateButton.setOnAction(e-> primaryStage.setScene(creationScene));
         root.add(todoCreateButton,1,0,2,1);
 
+        ObservableList<Todo> filteredList = FXCollections.observableArrayList(todoList);
+        filterChoiceBox.setOnAction(e->
+        {
+            String choice = "";
+            try{
+                choice = (String) filterChoiceBox.getValue();
+                switch(choice)
+                {
+                    case "Done": FXCollections.observableArrayList(filteredList.
+                            stream().filter(todo -> todo.getDone() == true).collect(Collectors.toList()));
+                }
+                ListView<Todo> todoListView = new ListView<Todo>(filteredList);
+                //ListView<Todo> todoListView = new ListView<Todo>(filteredList);
+                todoListView.setCellFactory(listView -> new TodoCell(todoCon));
+                todoListView.setMinSize(980,500);
+                root.add(todoListView,0,0);
+                mainContainer.setCenter(root);
+            }
+            catch(Exception exception)
+            {
+                exception.printStackTrace();
+            }
+
+        });
         ListView<Todo> todoListView = new ListView<Todo>(todoList);
-        todoListView.setCellFactory(listView -> new TodoCell());
+        todoListView.setCellFactory(listView -> new TodoCell(todoCon));
         todoListView.setMinSize(980,500);
         root.add(todoListView,0,0);
-        return new Scene(root, 1080, 720);
+        mainContainer.setCenter(root);
+        return new Scene(mainContainer, 1080, 720);
     }
     //todo Main Scene / Creation Scene in eigene Klassen auslagern
     private Scene initCreationScene()
@@ -100,8 +139,6 @@ public class UI extends Application {
         creationScreen.add(smallCal,0,4);
 
         return new Scene(creationScreen, 1080, 720);
-        //todo CRUD = Delete operations
-        //todo serialisation
     }
 
     private void extractTodoData(TextField todoTitleValue, TextField todoDescriptionValue) {
@@ -109,43 +146,7 @@ public class UI extends Application {
         String description = todoDescriptionValue.getText();
         LocalDate startDate = LocalDate.now();
         Todo todo = new Todo(title, description, startDate);
-        todoList.add(todo);
+        todoCon.addTodo(todo);
         System.out.println(todo);
-    }
-
-    private void saveTodo(ObservableList list)
-    {
-        try {
-            FileOutputStream fileOut = new FileOutputStream("./todos.txt");
-            ObjectOutputStream out = new ObjectOutputStream(fileOut);
-            out.writeObject(new ArrayList(list));
-            out.close();
-            fileOut.close();
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private ObservableList loadTodo()
-    {
-        try {
-            FileInputStream fileIn = new FileInputStream("./todos.txt");
-            ObjectInputStream in = new ObjectInputStream(fileIn);
-            List todos = (List) in.readObject();
-            ObservableList todoData = FXCollections.observableArrayList(todos);
-            in.close();
-            fileIn.close();
-            return todoData;
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-        return FXCollections.observableArrayList();
     }
 }
