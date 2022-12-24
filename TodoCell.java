@@ -1,10 +1,6 @@
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 
@@ -60,8 +56,8 @@ public class TodoCell extends ListCell<Todo>
         });
 
         CheckBox doneCb = new CheckBox();
-        doneCb.setSelected(todo.getDone());
-        doneCb.setOnAction(e -> todo.setDone(!todo.getDone()));
+        doneCb.setSelected(todo.isDone());
+        doneCb.setOnAction(e -> todo.setDone(!todo.isDone()));
 
         container.setTop(titleTodo);
         container.setCenter(descriptionTodo);

@@ -1,6 +1,6 @@
-import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-
+import static javafx.collections.FXCollections.observableArrayList;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -8,10 +8,12 @@ import java.util.List;
 public class todoController {
 
     ObservableList<Todo> todoList;
+    UI ui;
 
-    public todoController()
+    public todoController(UI ui)
     {
-        todoList = loadTodo();
+        this.ui = ui;
+        loadTodo();
     }
 
     public ObservableList<Todo> getTodoList()
@@ -19,15 +21,13 @@ public class todoController {
         return todoList;
     }
 
-    public void saveTodo(ObservableList list)
+    public void saveTodo()
     {
-        try {
-            FileOutputStream fileOut = new FileOutputStream("./todos.txt");
-            ObjectOutputStream out = new ObjectOutputStream(fileOut);
-            out.writeObject(new ArrayList(list));
-            out.close();
-            fileOut.close();
+        try (FileOutputStream fileOut = new FileOutputStream("./todos.txt");
+             ObjectOutputStream out = new ObjectOutputStream(fileOut))
 
+        {
+            out.writeObject(new ArrayList<Todo>(todoList));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -35,16 +35,14 @@ public class todoController {
         }
     }
 
-    public ObservableList loadTodo()
+    public void loadTodo()
     {
-        try {
-            FileInputStream fileIn = new FileInputStream("./todos.txt");
-            ObjectInputStream in = new ObjectInputStream(fileIn);
-            List todos = (List) in.readObject();
-            ObservableList todoData = FXCollections.observableArrayList(todos);
-            in.close();
-            fileIn.close();
-            return todoData;
+        List<Todo> todos = null;
+        //todo Versionskonvertierung für neuere Versionen
+        try (FileInputStream fileIn = new FileInputStream("./todos.txt");
+             ObjectInputStream in = new ObjectInputStream(fileIn))
+        {
+            todos = (List) in.readObject();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -52,7 +50,9 @@ public class todoController {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-        return FXCollections.observableArrayList();
+        if(todos == null) todos = new ArrayList<Todo>();
+        todoList = observableArrayList(todos);
+        todoList.addListener((ListChangeListener<? super Todo>) e->ui.updateView());
     }
 
     public void deleteTodo(Todo todo)

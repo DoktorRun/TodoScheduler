@@ -1,7 +1,6 @@
-import com.sun.nio.sctp.SctpMultiChannel;
 import javafx.application.Application;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import static javafx.collections.FXCollections.observableArrayList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -12,34 +11,35 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
-
-import java.io.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+
 
 public class UI extends Application {
     Stage primaryStage;
     Scene mainScene;
     Scene creationScene;
     todoController todoCon;
-    ObservableList<Todo> todoList;
+    ChoiceBox filterChoiceBox;
+    ListView<Todo> todoListView;
 
     public void init()
     {
-        todoCon = new todoController();
-        todoList = todoCon.getTodoList();
+        this.todoCon = new todoController(this);
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args)
+    {
         launch(args);
     }
 
     @Override
     public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
-        primaryStage.setOnCloseRequest(e->todoCon.saveTodo(todoList));
+        primaryStage.setOnCloseRequest(e->todoCon.saveTodo());
         primaryStage.setTitle("To-Do's");
 
         mainScene = initMainScene();
@@ -47,18 +47,21 @@ public class UI extends Application {
 
         primaryStage.setScene(mainScene);
         primaryStage.show();
+        updateView();
     }
 
     public Scene initMainScene()
     {
         BorderPane mainContainer = new BorderPane();
 
-        ChoiceBox filterChoiceBox = new ChoiceBox();
         ArrayList<String> filterItems = new ArrayList<String>();
+        filterItems.add("None");
         filterItems.add("Deadline");
         filterItems.add("Done");
         filterItems.add("Open");
-        ObservableList<String> filterMethods = FXCollections.observableArrayList(filterItems);
+        filterChoiceBox = new ChoiceBox();
+        filterChoiceBox.setValue("None");
+        ObservableList<String> filterMethods = observableArrayList(filterItems);
         filterChoiceBox.setItems(filterMethods);
         mainContainer.setTop(filterChoiceBox);
         BorderPane.setAlignment(filterChoiceBox,Pos.CENTER);
@@ -74,37 +77,31 @@ public class UI extends Application {
         todoCreateButton.setOnAction(e-> primaryStage.setScene(creationScene));
         root.add(todoCreateButton,1,0,2,1);
 
-        ObservableList<Todo> filteredList = FXCollections.observableArrayList(todoList);
-        filterChoiceBox.setOnAction(e->
-        {
-            String choice = "";
-            try{
-                choice = (String) filterChoiceBox.getValue();
-                switch(choice)
-                {
-                    case "Done": FXCollections.observableArrayList(filteredList.
-                            stream().filter(todo -> todo.getDone() == true).collect(Collectors.toList()));
-                }
-                ListView<Todo> todoListView = new ListView<Todo>(filteredList);
-                //ListView<Todo> todoListView = new ListView<Todo>(filteredList);
-                todoListView.setCellFactory(listView -> new TodoCell(todoCon));
-                todoListView.setMinSize(980,500);
-                root.add(todoListView,0,0);
-                mainContainer.setCenter(root);
-            }
-            catch(Exception exception)
-            {
-                exception.printStackTrace();
-            }
-
-        });
-        ListView<Todo> todoListView = new ListView<Todo>(todoList);
+        filterChoiceBox.setOnAction(e-> updateView());
+        todoListView = new ListView<Todo>();
         todoListView.setCellFactory(listView -> new TodoCell(todoCon));
         todoListView.setMinSize(980,500);
         root.add(todoListView,0,0);
         mainContainer.setCenter(root);
         return new Scene(mainContainer, 1080, 720);
     }
+
+    public void updateView()
+    {
+        String choice = (String) filterChoiceBox.getValue();
+        List<Todo> filteredTodos;
+        switch(choice)
+        {
+            case "Done": filteredTodos = todoCon.getTodoList().stream().
+                    filter(todo -> todo.isDone()).collect(Collectors.toList()); break;
+            case "Deadline": //todo implement deadline filter
+            case "None":
+            default: filteredTodos = todoCon.getTodoList();
+        }
+
+        todoListView.setItems(observableArrayList(filteredTodos));
+    }
+
     //todo Main Scene / Creation Scene in eigene Klassen auslagern
     private Scene initCreationScene()
     {

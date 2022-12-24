@@ -1,6 +1,3 @@
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.time.LocalDate;
 
@@ -46,7 +43,7 @@ public class Todo implements Serializable
     {
         todoDone = state;
     }
-    public boolean getDone()
+    public boolean isDone()
     {
         return todoDone;
     }
